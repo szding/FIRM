@@ -14,7 +14,6 @@ Imports:
     RANN
 Suggests:
     ggplot2
-LinkingTo: 
     Rcpp, 
     RcppArmadillo, 
     RcppEigen
@@ -24,3 +23,5 @@ Depends:
     R (>= 3.5.0)
    
     
+
+LinkingTo: Rcpp, RcppEigen
