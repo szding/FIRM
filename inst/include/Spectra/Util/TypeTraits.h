@@ -1,24 +1,19 @@
-// Copyright (C) 2018-2025 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2018-2019 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SPECTRA_TYPE_TRAITS_H
-#define SPECTRA_TYPE_TRAITS_H
+#ifndef TYPE_TRAITS_H
+#define TYPE_TRAITS_H
 
 #include <Eigen/Core>
 #include <limits>
 
 /// \cond
 
-// Clang-Format will have unintended effects:
-//     static constexpr Scalar(min)()
-// So we turn it off here
-//
-// clang-format off
-
 namespace Spectra {
+
 
 // For a real value type "Scalar", we want to know its smallest
 // positive value, i.e., std::numeric_limits<Scalar>::min().
@@ -36,13 +31,9 @@ namespace Spectra {
 template <typename Scalar>
 struct TypeTraits
 {
-    static constexpr Scalar epsilon()
+    static inline Scalar min()
     {
-        return Eigen::numext::numeric_limits<Scalar>::epsilon();
-    }
-    static constexpr Scalar (min)()
-    {
-        return epsilon() * epsilon() * epsilon();
+        return Eigen::numext::pow(Eigen::NumTraits<Scalar>::epsilon(), Scalar(3));
     }
 };
 
@@ -50,50 +41,33 @@ struct TypeTraits
 template <>
 struct TypeTraits<float>
 {
-    static constexpr float epsilon()
+    static inline float min()
     {
-        return std::numeric_limits<float>::epsilon();
-    }
-    static constexpr float (min)()
-    {
-        return (std::numeric_limits<float>::min)();
+        return std::numeric_limits<float>::min();
     }
 };
 
 template <>
 struct TypeTraits<double>
 {
-    static constexpr double epsilon()
+    static inline double min()
     {
-        return std::numeric_limits<double>::epsilon();
-    }
-    static constexpr double (min)()
-    {
-        return (std::numeric_limits<double>::min)();
+        return std::numeric_limits<double>::min();
     }
 };
 
 template <>
 struct TypeTraits<long double>
 {
-    static constexpr long double epsilon()
+    static inline long double min()
     {
-        return std::numeric_limits<long double>::epsilon();
-    }
-    static constexpr long double (min)()
-    {
-        return (std::numeric_limits<long double>::min)();
+        return std::numeric_limits<long double>::min();
     }
 };
 
-// Get the element type of a "scalar"
-// ElemType<double>                 => double
-// ElemType<std::complex<double>>   => double
-template <typename T>
-using ElemType = typename Eigen::NumTraits<T>::Real;
 
-}  // namespace Spectra
+} // namespace Spectra
 
 /// \endcond
 
-#endif  // SPECTRA_TYPE_TRAITS_H
+#endif // TYPE_TRAITS_H

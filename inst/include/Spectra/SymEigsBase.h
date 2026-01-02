@@ -4,14 +4,13 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef GEN_EIGS_BASE_H
-#define GEN_EIGS_BASE_H
+#ifndef SYM_EIGS_BASE_H
+#define SYM_EIGS_BASE_H
 
 #include <Eigen/Core>
 #include <vector>     // std::vector
 #include <cmath>      // std::abs, std::pow, std::sqrt
 #include <algorithm>  // std::min, std::copy
-#include <complex>    // std::complex, std::conj, std::norm, std::abs
 #include <stdexcept>  // std::invalid_argument
 
 #include "Util/TypeTraits.h"
@@ -20,25 +19,30 @@
 #include "Util/SimpleRandom.h"
 #include "MatOp/internal/ArnoldiOp.h"
 #include "LinAlg/UpperHessenbergQR.h"
-#include "LinAlg/DoubleShiftQR.h"
-#include "LinAlg/UpperHessenbergEigen.h"
-#include "LinAlg/Arnoldi.h"
+#include "LinAlg/TridiagEigen.h"
+#include "LinAlg/Lanczos.h"
 
 namespace Spectra {
 
 
 ///
+/// \defgroup EigenSolver Eigen Solvers
+///
+/// Eigen solvers for different types of problems.
+///
+
+///
 /// \ingroup EigenSolver
 ///
-/// This is the base class for general eigen solvers, mainly for internal use.
+/// This is the base class for symmetric eigen solvers, mainly for internal use.
 /// It is kept here to provide the documentation for member functions of concrete eigen solvers
-/// such as GenEigsSolver and GenEigsRealShiftSolver.
+/// such as SymEigsSolver and SymEigsShiftSolver.
 ///
 template < typename Scalar,
            int      SelectionRule,
            typename OpType,
            typename BOpType >
-class GenEigsBase
+class SymEigsBase
 {
 private:
     typedef Eigen::Index Index;
@@ -50,88 +54,52 @@ private:
     typedef Eigen::Map<Vector> MapVec;
     typedef Eigen::Map<const Vector> MapConstVec;
 
-    typedef std::complex<Scalar> Complex;
-    typedef Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic> ComplexMatrix;
-    typedef Eigen::Matrix<Complex, Eigen::Dynamic, 1> ComplexVector;
-
     typedef ArnoldiOp<Scalar, OpType, BOpType> ArnoldiOpType;
-    typedef Arnoldi<Scalar, ArnoldiOpType> ArnoldiFac;
+    typedef Lanczos<Scalar, ArnoldiOpType> LanczosFac;
 
 protected:
-    OpType*       m_op;        // object to conduct matrix operation,
+    OpType*      m_op;         // object to conduct matrix operation,
                                // e.g. matrix-vector product
-    const Index   m_n;         // dimension of matrix A
-    const Index   m_nev;       // number of eigenvalues requested
-    const Index   m_ncv;       // dimension of Krylov subspace in the Arnoldi method
-    Index         m_nmatop;    // number of matrix operations called
-    Index         m_niter;     // number of restarting iterations
+    const Index  m_n;          // dimension of matrix A
+    const Index  m_nev;        // number of eigenvalues requested
+    const Index  m_ncv;        // dimension of Krylov subspace in the Lanczos method
+    Index        m_nmatop;     // number of matrix operations called
+    Index        m_niter;      // number of restarting iterations
 
-    ArnoldiFac    m_fac;       // Arnoldi factorization
-
-    ComplexVector m_ritz_val;  // Ritz values
-    ComplexMatrix m_ritz_vec;  // Ritz vectors
-    ComplexVector m_ritz_est;  // last row of m_ritz_vec
+    LanczosFac   m_fac;        // Lanczos factorization
+    Vector       m_ritz_val;   // Ritz values
 
 private:
-    BoolArray     m_ritz_conv; // indicator of the convergence of Ritz values
-    int           m_info;      // status of the computation
+    Matrix       m_ritz_vec;   // Ritz vectors
+    Vector       m_ritz_est;   // last row of m_ritz_vec, also called the Ritz estimates
+    BoolArray    m_ritz_conv;  // indicator of the convergence of Ritz values
+    int          m_info;       // status of the computation
 
-    const Scalar  m_near_0;    // a very small value, but 1.0 / m_near_0 does not overflow
+    const Scalar m_near_0;     // a very small value, but 1.0 / m_near_0 does not overflow
                                // ~= 1e-307 for the "double" type
-    const Scalar  m_eps;       // the machine precision, ~= 1e-16 for the "double" type
-    const Scalar  m_eps23;     // m_eps^(2/3), used to test the convergence
+    const Scalar m_eps;        // the machine precision, ~= 1e-16 for the "double" type
+    const Scalar m_eps23;      // m_eps^(2/3), used to test the convergence
 
-    // Real Ritz values calculated from UpperHessenbergEigen have exact zero imaginary part
-    // Complex Ritz values have exact conjugate pairs
-    // So we use exact tests here
-    static bool is_complex(const Complex& v) { return v.imag() != Scalar(0); }
-    static bool is_conj(const Complex& v1, const Complex& v2) { return v1 == Eigen::numext::conj(v2); }
-
-    // Implicitly restarted Arnoldi factorization
+    // Implicitly restarted Lanczos factorization
     void restart(Index k)
     {
-        using std::norm;
-
         if(k >= m_ncv)
             return;
 
-        DoubleShiftQR<Scalar> decomp_ds(m_ncv);
-        UpperHessenbergQR<Scalar> decomp_hb(m_ncv);
+        TridiagQR<Scalar> decomp(m_ncv);
         Matrix Q = Matrix::Identity(m_ncv, m_ncv);
 
         for(Index i = k; i < m_ncv; i++)
         {
-            if(is_complex(m_ritz_val[i]) && is_conj(m_ritz_val[i], m_ritz_val[i + 1]))
-            {
-                // H - mu * I = Q1 * R1
-                // H <- R1 * Q1 + mu * I = Q1' * H * Q1
-                // H - conj(mu) * I = Q2 * R2
-                // H <- R2 * Q2 + conj(mu) * I = Q2' * H * Q2
-                //
-                // (H - mu * I) * (H - conj(mu) * I) = Q1 * Q2 * R2 * R1 = Q * R
-                const Scalar s = Scalar(2) * m_ritz_val[i].real();
-                const Scalar t = norm(m_ritz_val[i]);
+            // QR decomposition of H-mu*I, mu is the shift
+            decomp.compute(m_fac.matrix_H(), m_ritz_val[i]);
 
-                decomp_ds.compute(m_fac.matrix_H(), s, t);
-
-                // Q -> Q * Qi
-                decomp_ds.apply_YQ(Q);
-                // H -> Q'HQ
-                // Matrix Q = Matrix::Identity(m_ncv, m_ncv);
-                // decomp_ds.apply_YQ(Q);
-                // m_fac_H = Q.transpose() * m_fac_H * Q;
-                m_fac.compress_H(decomp_ds);
-
-                i++;
-            } else {
-                // QR decomposition of H - mu * I, mu is real
-                decomp_hb.compute(m_fac.matrix_H(), m_ritz_val[i].real());
-
-                // Q -> Q * Qi
-                decomp_hb.apply_YQ(Q);
-                // H -> Q'HQ = RQ + mu * I
-                m_fac.compress_H(decomp_hb);
-            }
+            // Q -> Q * Qi
+            decomp.apply_YQ(Q);
+            // H -> Q'HQ
+            // Since QR = H - mu * I, we have H = QR + mu * I
+            // and therefore Q'HQ = RQ + mu * I
+            m_fac.compress_H(decomp);
         }
 
         m_fac.compress_V(Q);
@@ -145,7 +113,7 @@ private:
     {
         // thresh = tol * max(m_eps23, abs(theta)), theta for Ritz value
         Array thresh = tol * m_ritz_val.head(m_nev).array().abs().max(m_eps23);
-        Array resid = m_ritz_est.head(m_nev).array().abs() * m_fac.f_norm();
+        Array resid =  m_ritz_est.head(m_nev).array().abs() * m_fac.f_norm();
         // Converged "wanted" Ritz values
         m_ritz_conv = (resid < thresh);
 
@@ -161,23 +129,15 @@ private:
         for(Index i = m_nev; i < m_ncv; i++)
             if(abs(m_ritz_est[i]) < m_near_0)  nev_new++;
 
-        // Adjust nev_new, according to dnaup2.f line 660~674 in ARPACK
+        // Adjust nev_new, according to dsaup2.f line 677~684 in ARPACK
         nev_new += std::min(nconv, (m_ncv - nev_new) / 2);
         if(nev_new == 1 && m_ncv >= 6)
             nev_new = m_ncv / 2;
-        else if(nev_new == 1 && m_ncv > 3)
+        else if(nev_new == 1 && m_ncv > 2)
             nev_new = 2;
 
-        if(nev_new > m_ncv - 2)
-            nev_new = m_ncv - 2;
-
-        // Increase nev by one if ritz_val[nev - 1] and
-        // ritz_val[nev] are conjugate pairs
-        if(is_complex(m_ritz_val[nev_new - 1]) &&
-           is_conj(m_ritz_val[nev_new - 1], m_ritz_val[nev_new]))
-        {
-            nev_new++;
-        }
+        if(nev_new > m_ncv - 1)
+            nev_new = m_ncv - 1;
 
         return nev_new;
     }
@@ -185,12 +145,34 @@ private:
     // Retrieves and sorts Ritz values and Ritz vectors
     void retrieve_ritzpair()
     {
-        UpperHessenbergEigen<Scalar> decomp(m_fac.matrix_H());
-        const ComplexVector& evals = decomp.eigenvalues();
-        ComplexMatrix evecs = decomp.eigenvectors();
+        TridiagEigen<Scalar> decomp(m_fac.matrix_H());
+        const Vector& evals = decomp.eigenvalues();
+        const Matrix& evecs = decomp.eigenvectors();
 
-        SortEigenvalue<Complex, SelectionRule> sorting(evals.data(), evals.size());
+        SortEigenvalue<Scalar, SelectionRule> sorting(evals.data(), evals.size());
         std::vector<int> ind = sorting.index();
+
+        // For BOTH_ENDS, the eigenvalues are sorted according
+        // to the LARGEST_ALGE rule, so we need to move those smallest
+        // values to the left
+        // The order would be
+        // Largest => Smallest => 2nd largest => 2nd smallest => ...
+        // We keep this order since the first k values will always be
+        // the wanted collection, no matter k is nev_updated (used in restart())
+        // or is nev (used in sort_ritzpair())
+        if(SelectionRule == BOTH_ENDS)
+        {
+            std::vector<int> ind_copy(ind);
+            for(Index i = 0; i < m_ncv; i++)
+            {
+                // If i is even, pick values from the left (large values)
+                // If i is odd, pick values from the right (small values)
+                if(i % 2 == 0)
+                    ind[i] = ind_copy[i / 2];
+                else
+                    ind[i] = ind_copy[m_ncv - 1 - i / 2];
+            }
+        }
 
         // Copy the Ritz values and vectors to m_ritz_val and m_ritz_vec, respectively
         for(Index i = 0; i < m_ncv; i++)
@@ -210,40 +192,28 @@ protected:
     virtual void sort_ritzpair(int sort_rule)
     {
         // First make sure that we have a valid index vector
-        SortEigenvalue<Complex, LARGEST_MAGN> sorting(m_ritz_val.data(), m_nev);
+        SortEigenvalue<Scalar, LARGEST_ALGE> sorting(m_ritz_val.data(), m_nev);
         std::vector<int> ind = sorting.index();
 
         switch(sort_rule)
         {
-            case LARGEST_MAGN:
+            case LARGEST_ALGE:
                 break;
-            case LARGEST_REAL:
+            case LARGEST_MAGN:
             {
-                SortEigenvalue<Complex, LARGEST_REAL> sorting(m_ritz_val.data(), m_nev);
+                SortEigenvalue<Scalar, LARGEST_MAGN> sorting(m_ritz_val.data(), m_nev);
                 ind = sorting.index();
             }
                 break;
-            case LARGEST_IMAG:
+            case SMALLEST_ALGE:
             {
-                SortEigenvalue<Complex, LARGEST_IMAG> sorting(m_ritz_val.data(), m_nev);
+                SortEigenvalue<Scalar, SMALLEST_ALGE> sorting(m_ritz_val.data(), m_nev);
                 ind = sorting.index();
             }
                 break;
             case SMALLEST_MAGN:
             {
-                SortEigenvalue<Complex, SMALLEST_MAGN> sorting(m_ritz_val.data(), m_nev);
-                ind = sorting.index();
-            }
-                break;
-            case SMALLEST_REAL:
-            {
-                SortEigenvalue<Complex, SMALLEST_REAL> sorting(m_ritz_val.data(), m_nev);
-                ind = sorting.index();
-            }
-                break;
-            case SMALLEST_IMAG:
-            {
-                SortEigenvalue<Complex, SMALLEST_IMAG> sorting(m_ritz_val.data(), m_nev);
+                SortEigenvalue<Scalar, SMALLEST_MAGN> sorting(m_ritz_val.data(), m_nev);
                 ind = sorting.index();
             }
                 break;
@@ -251,8 +221,8 @@ protected:
                 throw std::invalid_argument("unsupported sorting rule");
         }
 
-        ComplexVector new_ritz_val(m_ncv);
-        ComplexMatrix new_ritz_vec(m_ncv, m_nev);
+        Vector new_ritz_val(m_ncv);
+        Matrix new_ritz_vec(m_ncv, m_nev);
         BoolArray new_ritz_conv(m_nev);
 
         for(Index i = 0; i < m_nev; i++)
@@ -270,7 +240,7 @@ protected:
 public:
     /// \cond
 
-    GenEigsBase(OpType* op, BOpType* Bop, Index nev, Index ncv) :
+    SymEigsBase(OpType* op, BOpType* Bop, Index nev, Index ncv) :
         m_op(op),
         m_n(m_op->rows()),
         m_nev(nev),
@@ -283,17 +253,17 @@ public:
         m_eps(Eigen::NumTraits<Scalar>::epsilon()),
         m_eps23(Eigen::numext::pow(m_eps, Scalar(2.0) / 3))
     {
-        if(nev < 1 || nev > m_n - 2)
-            throw std::invalid_argument("nev must satisfy 1 <= nev <= n - 2, n is the size of matrix");
+        if(nev < 1 || nev > m_n - 1)
+            throw std::invalid_argument("nev must satisfy 1 <= nev <= n - 1, n is the size of matrix");
 
-        if(ncv < nev + 2 || ncv > m_n)
-            throw std::invalid_argument("ncv must satisfy nev + 2 <= ncv <= n, n is the size of matrix");
+        if(ncv <= nev || ncv > m_n)
+            throw std::invalid_argument("ncv must satisfy nev < ncv <= n, n is the size of matrix");
     }
 
     ///
     /// Virtual destructor
     ///
-    virtual ~GenEigsBase() {}
+    virtual ~SymEigsBase() {}
 
     /// \endcond
 
@@ -322,7 +292,7 @@ public:
         m_nmatop = 0;
         m_niter = 0;
 
-        // Initialize the Arnoldi factorization
+        // Initialize the Lanczos factorization
         MapConstVec v0(init_resid, m_n);
         m_fac.init(v0, m_nmatop);
     }
@@ -348,22 +318,20 @@ public:
     /// \param tol        Precision parameter for the calculated eigenvalues.
     /// \param sort_rule  Rule to sort the eigenvalues and eigenvectors.
     ///                   Supported values are
-    ///                   `Spectra::LARGEST_MAGN`, `Spectra::LARGEST_REAL`,
-    ///                   `Spectra::LARGEST_IMAG`, `Spectra::SMALLEST_MAGN`,
-    ///                   `Spectra::SMALLEST_REAL` and `Spectra::SMALLEST_IMAG`,
-    ///                   for example `LARGEST_MAGN` indicates that eigenvalues
-    ///                   with largest magnitude come first.
-    ///                   Note that this argument is only used to
+    ///                   `Spectra::LARGEST_ALGE`, `Spectra::LARGEST_MAGN`,
+    ///                   `Spectra::SMALLEST_ALGE` and `Spectra::SMALLEST_MAGN`,
+    ///                   for example `LARGEST_ALGE` indicates that largest eigenvalues
+    ///                   come first. Note that this argument is only used to
     ///                   **sort** the final result, and the **selection** rule
     ///                   (e.g. selecting the largest or smallest eigenvalues in the
     ///                   full spectrum) is specified by the template parameter
-    ///                   `SelectionRule` of GenEigsSolver.
+    ///                   `SelectionRule` of SymEigsSolver.
     ///
     /// \return Number of converged eigenvalues.
     ///
-    Index compute(Index maxit = 1000, Scalar tol = 1e-10, int sort_rule = LARGEST_MAGN)
+    Index compute(Index maxit = 1000, Scalar tol = 1e-10, int sort_rule = LARGEST_ALGE)
     {
-        // The m-step Arnoldi factorization
+        // The m-step Lanczos factorization
         m_fac.factorize_from(1, m_ncv, m_nmatop);
         retrieve_ritzpair();
         // Restarting
@@ -405,14 +373,14 @@ public:
     ///
     /// Returns the converged eigenvalues.
     ///
-    /// \return A complex-valued vector containing the eigenvalues.
-    /// Returned vector type will be `Eigen::Vector<std::complex<Scalar>, ...>`, depending on
+    /// \return A vector containing the eigenvalues.
+    /// Returned vector type will be `Eigen::Vector<Scalar, ...>`, depending on
     /// the template parameter `Scalar` defined.
     ///
-    ComplexVector eigenvalues() const
+    Vector eigenvalues() const
     {
         const Index nconv = m_ritz_conv.cast<Index>().sum();
-        ComplexVector res(nconv);
+        Vector res(nconv);
 
         if(!nconv)
             return res;
@@ -435,20 +403,20 @@ public:
     ///
     /// \param nvec The number of eigenvectors to return.
     ///
-    /// \return A complex-valued matrix containing the eigenvectors.
-    /// Returned matrix type will be `Eigen::Matrix<std::complex<Scalar>, ...>`,
+    /// \return A matrix containing the eigenvectors.
+    /// Returned matrix type will be `Eigen::Matrix<Scalar, ...>`,
     /// depending on the template parameter `Scalar` defined.
     ///
-    ComplexMatrix eigenvectors(Index nvec) const
+    virtual Matrix eigenvectors(Index nvec) const
     {
         const Index nconv = m_ritz_conv.cast<Index>().sum();
         nvec = std::min(nvec, nconv);
-        ComplexMatrix res(m_n, nvec);
+        Matrix res(m_n, nvec);
 
         if(!nvec)
             return res;
 
-        ComplexMatrix ritz_vec_conv(m_ncv, nvec);
+        Matrix ritz_vec_conv(m_ncv, nvec);
         Index j = 0;
         for(Index i = 0; i < m_nev && j < nvec; i++)
         {
@@ -467,7 +435,7 @@ public:
     ///
     /// Returns all converged eigenvectors.
     ///
-    ComplexMatrix eigenvectors() const
+    virtual Matrix eigenvectors() const
     {
         return eigenvectors(m_nev);
     }
@@ -476,4 +444,4 @@ public:
 
 } // namespace Spectra
 
-#endif // GEN_EIGS_BASE_H
+#endif // SYM_EIGS_BASE_H

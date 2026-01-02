@@ -1,19 +1,19 @@
-// Copyright (C) 2016-2025 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2016-2019 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SPECTRA_DENSE_CHOLESKY_H
-#define SPECTRA_DENSE_CHOLESKY_H
+#ifndef DENSE_CHOLESKY_H
+#define DENSE_CHOLESKY_H
 
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
 #include <stdexcept>
-
 #include "../Util/CompInfo.h"
 
 namespace Spectra {
+
 
 ///
 /// \ingroup MatOp
@@ -23,32 +23,21 @@ namespace Spectra {
 /// matrix. It is mainly used in the SymGEigsSolver generalized eigen solver
 /// in the Cholesky decomposition mode.
 ///
-/// \tparam Scalar_ The element type of the matrix, for example,
-///                 `float`, `double`, and `long double`.
-/// \tparam Uplo    Either `Eigen::Lower` or `Eigen::Upper`, indicating which
-///                 triangular part of the matrix is used.
-/// \tparam Flags   Either `Eigen::ColMajor` or `Eigen::RowMajor`, indicating
-///                 the storage format of the input matrix.
-///
-template <typename Scalar_, int Uplo = Eigen::Lower, int Flags = Eigen::ColMajor>
+template <typename Scalar, int Uplo = Eigen::Lower>
 class DenseCholesky
 {
-public:
-    ///
-    /// Element type of the matrix.
-    ///
-    using Scalar = Scalar_;
-
 private:
-    using Index = Eigen::Index;
-    using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Flags>;
-    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
-    using MapConstVec = Eigen::Map<const Vector>;
-    using MapVec = Eigen::Map<Vector>;
+    typedef Eigen::Index Index;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
+    typedef Eigen::Map<const Matrix> MapConstMat;
+    typedef Eigen::Map<const Vector> MapConstVec;
+    typedef Eigen::Map<Vector> MapVec;
+    typedef const Eigen::Ref<const Matrix> ConstGenericMatrix;
 
     const Index m_n;
     Eigen::LLT<Matrix, Uplo> m_decomp;
-    CompInfo m_info;  // status of the decomposition
+    int m_info;  // status of the decomposition
 
 public:
     ///
@@ -59,21 +48,16 @@ public:
     /// `Eigen::MatrixXf`), or its mapped version
     /// (e.g. `Eigen::Map<Eigen::MatrixXd>`).
     ///
-    template <typename Derived>
-    DenseCholesky(const Eigen::MatrixBase<Derived>& mat) :
-        m_n(mat.rows()), m_info(CompInfo::NotComputed)
+    DenseCholesky(ConstGenericMatrix& mat) :
+        m_n(mat.rows()), m_info(NOT_COMPUTED)
     {
-        static_assert(
-            static_cast<int>(Derived::PlainObject::IsRowMajor) == static_cast<int>(Matrix::IsRowMajor),
-            "DenseCholesky: the \"Flags\" template parameter does not match the input matrix (Eigen::ColMajor/Eigen::RowMajor)");
-
-        if (m_n != mat.cols())
+        if(mat.rows() != mat.cols())
             throw std::invalid_argument("DenseCholesky: matrix must be square");
 
         m_decomp.compute(mat);
         m_info = (m_decomp.info() == Eigen::Success) ?
-            CompInfo::Successful :
-            CompInfo::NumericalIssue;
+                 SUCCESSFUL :
+                 NUMERICAL_ISSUE;
     }
 
     ///
@@ -89,7 +73,7 @@ public:
     /// Returns the status of the computation.
     /// The full list of enumeration values can be found in \ref Enumerations.
     ///
-    CompInfo info() const { return m_info; }
+    int info() const { return m_info; }
 
     ///
     /// Performs the lower triangular solving operation \f$y=L^{-1}x\f$.
@@ -100,8 +84,8 @@ public:
     // y_out = inv(L) * x_in
     void lower_triangular_solve(const Scalar* x_in, Scalar* y_out) const
     {
-        MapConstVec x(x_in, m_n);
-        MapVec y(y_out, m_n);
+        MapConstVec x(x_in,  m_n);
+        MapVec      y(y_out, m_n);
         y.noalias() = m_decomp.matrixL().solve(x);
     }
 
@@ -114,12 +98,13 @@ public:
     // y_out = inv(L') * x_in
     void upper_triangular_solve(const Scalar* x_in, Scalar* y_out) const
     {
-        MapConstVec x(x_in, m_n);
-        MapVec y(y_out, m_n);
+        MapConstVec x(x_in,  m_n);
+        MapVec      y(y_out, m_n);
         y.noalias() = m_decomp.matrixU().solve(x);
     }
 };
 
-}  // namespace Spectra
 
-#endif  // SPECTRA_DENSE_CHOLESKY_H
+} // namespace Spectra
+
+#endif // DENSE_CHOLESKY_H

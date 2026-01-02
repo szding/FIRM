@@ -1,17 +1,18 @@
-// Copyright (C) 2016-2025 Yixuan Qiu <yixuan.qiu@cos.name>
+// Copyright (C) 2016-2019 Yixuan Qiu <yixuan.qiu@cos.name>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef SPECTRA_DENSE_GEN_REAL_SHIFT_SOLVE_H
-#define SPECTRA_DENSE_GEN_REAL_SHIFT_SOLVE_H
+#ifndef DENSE_GEN_REAL_SHIFT_SOLVE_H
+#define DENSE_GEN_REAL_SHIFT_SOLVE_H
 
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <stdexcept>
 
 namespace Spectra {
+
 
 ///
 /// \ingroup MatOp
@@ -20,27 +21,16 @@ namespace Spectra {
 /// i.e., calculating \f$y=(A-\sigma I)^{-1}x\f$ for any real \f$\sigma\f$ and
 /// vector \f$x\f$. It is mainly used in the GenEigsRealShiftSolver eigen solver.
 ///
-/// \tparam Scalar_ The element type of the matrix, for example,
-///                 `float`, `double`, and `long double`.
-/// \tparam Flags   Either `Eigen::ColMajor` or `Eigen::RowMajor`, indicating
-///                 the storage format of the input matrix.
-///
-template <typename Scalar_, int Flags = Eigen::ColMajor>
+template <typename Scalar>
 class DenseGenRealShiftSolve
 {
-public:
-    ///
-    /// Element type of the matrix.
-    ///
-    using Scalar = Scalar_;
-
 private:
-    using Index = Eigen::Index;
-    using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Flags>;
-    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
-    using MapConstVec = Eigen::Map<const Vector>;
-    using MapVec = Eigen::Map<Vector>;
-    using ConstGenericMatrix = const Eigen::Ref<const Matrix>;
+    typedef Eigen::Index Index;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
+    typedef Eigen::Map<const Vector> MapConstVec;
+    typedef Eigen::Map<Vector> MapVec;
+    typedef const Eigen::Ref<const Matrix> ConstGenericMatrix;
 
     ConstGenericMatrix m_mat;
     const Index m_n;
@@ -55,15 +45,10 @@ public:
     /// `Eigen::MatrixXf`), or its mapped version
     /// (e.g. `Eigen::Map<Eigen::MatrixXd>`).
     ///
-    template <typename Derived>
-    DenseGenRealShiftSolve(const Eigen::MatrixBase<Derived>& mat) :
+    DenseGenRealShiftSolve(ConstGenericMatrix& mat) :
         m_mat(mat), m_n(mat.rows())
     {
-        static_assert(
-            static_cast<int>(Derived::PlainObject::IsRowMajor) == static_cast<int>(Matrix::IsRowMajor),
-            "DenseGenRealShiftSolve: the \"Flags\" template parameter does not match the input matrix (Eigen::ColMajor/Eigen::RowMajor)");
-
-        if (mat.rows() != mat.cols())
+        if(mat.rows() != mat.cols())
             throw std::invalid_argument("DenseGenRealShiftSolve: matrix must be square");
     }
 
@@ -79,7 +64,7 @@ public:
     ///
     /// Set the real shift \f$\sigma\f$.
     ///
-    void set_shift(const Scalar& sigma)
+    void set_shift(Scalar sigma)
     {
         m_solver.compute(m_mat - sigma * Matrix::Identity(m_n, m_n));
     }
@@ -93,12 +78,13 @@ public:
     // y_out = inv(A - sigma * I) * x_in
     void perform_op(const Scalar* x_in, Scalar* y_out) const
     {
-        MapConstVec x(x_in, m_n);
-        MapVec y(y_out, m_n);
+        MapConstVec x(x_in,  m_n);
+        MapVec      y(y_out, m_n);
         y.noalias() = m_solver.solve(x);
     }
 };
 
-}  // namespace Spectra
 
-#endif  // SPECTRA_DENSE_GEN_REAL_SHIFT_SOLVE_H
+} // namespace Spectra
+
+#endif // DENSE_GEN_REAL_SHIFT_SOLVE_H
