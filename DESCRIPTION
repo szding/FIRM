@@ -1,0 +1,26 @@
+Package: FIRM
+Type: Package
+Title: Flexible Integration of Single-Cell RNA-Seq Data
+Version: 0.1.0
+Authors@R: c(person(given = "Jingsi", family = "Ming", role = c("aut", "cre"),
+                    email = "jsming@fem.ecnu.edu.cn"))
+Description: Provides functions for the flexible integration of heterogeneous scRNA-seq datasets across multiple tissue types, platforms, and experimental batches. Implements the method described in Ming (2022) <doi:10.1093/bib/bbac167>.
+License: GPL-3  
+Encoding: UTF-8
+LazyData: true
+LazyDataCompression: bzip2
+Imports: 
+    Seurat (>= 5.0.0),
+    RANN
+Suggests:
+    ggplot2
+LinkingTo: 
+    Rcpp, 
+    RcppArmadillo, 
+    RcppEigen
+RoxygenNote: 7.3.3
+NeedsCompilation: yes
+Depends: 
+    R (>= 3.5.0)
+   
+    
