@@ -13,9 +13,6 @@ A list of 4 elements:
   \item{meta_tenx}{data.frame, cell-level metadata for tenx}
 }
 }
-\source{
-\url{https://github.com/szding/FIRM/data }
-}
 \usage{
 ExampleData
 }

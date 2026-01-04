@@ -34,16 +34,16 @@ selection of the top 4 000 highly-variable genes (HVGs).
 \examples{
 \dontrun{
 data("ExampleData")
-prep_SS2  <- prep_data(SS2)
+prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
 Dataset1  <- prep_SS2$Dataset
 hvg1      <- prep_SS2$hvg
 
-prep_tenx <- prep_data(tenx)
+prep_tenx <- prep_data(ExampleData$tenx, hvg_genes = 1000)
 Dataset2  <- prep_tenx$Dataset
 hvg2      <- prep_tenx$hvg
 
 # save results to disk
-prep_data(tenx,
+prep_data(ExampleData$tenx,
           file_path = tempdir(),
           file_name = "tenx_processed")
 }

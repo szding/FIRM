@@ -10,7 +10,6 @@
 #'   \item{meta_SS2}{data.frame, cell-level metadata for SS2}
 #'   \item{meta_tenx}{data.frame, cell-level metadata for tenx}
 #' }
-#' @source \url{https://github.com/szding/FIRM/data }
 #' @examples
 #' \dontrun{
 #' data("ExampleData")

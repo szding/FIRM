@@ -83,17 +83,20 @@ PCA; if correction does not improve mixing the latter is returned.
 \dontrun{
 library(Seurat)
 data("ExampleData")
-SS2  <- ExampleData$SS2
-tenx <- ExampleData$tenx
-hvg1 <- VariableFeatures(SS2)
-hvg2 <- VariableFeatures(tenx)
+prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
+Dataset1  <- prep_SS2$Dataset
+hvg1      <- prep_SS2$hvg
 
-integrated <- FIRM(SS2, tenx, hvg1, hvg2, dims = 30)
-dim(integrated)
+prep_tenx <- prep_data(ExampleData$tenx, hvg_genes = 1000)
+Dataset2  <- prep_tenx$Dataset
+hvg2      <- prep_tenx$hvg
+
+res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
+           dims = 15, all_genes = FALSE)
 
 # with full diagnostics
-res <- FIRM(SS2, tenx, hvg1, hvg2, dims = 30, verbose = TRUE)
-str(res)
+res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
+            dims = 30, all_genes = TRUE, verbose = TRUE)
 }
 
 }

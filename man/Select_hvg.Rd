@@ -25,6 +25,3 @@ or rank-based top consensus.
 \seealso{
 \code{\link{prep_data}}
 }
-\author{
-Jingsi Ming
-}

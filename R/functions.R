@@ -26,16 +26,16 @@
 #' @examples
 #' \dontrun{
 #' data("ExampleData")
-#' prep_SS2  <- prep_data(SS2)
+#' prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
 #' Dataset1  <- prep_SS2$Dataset
 #' hvg1      <- prep_SS2$hvg
 #'
-#' prep_tenx <- prep_data(tenx)
+#' prep_tenx <- prep_data(ExampleData$tenx, hvg_genes = 1000)
 #' Dataset2  <- prep_tenx$Dataset
 #' hvg2      <- prep_tenx$hvg
 #'
 #' # save results to disk
-#' prep_data(tenx,
+#' prep_data(ExampleData$tenx,
 #'           file_path = tempdir(),
 #'           file_name = "tenx_processed")
 #' }
@@ -125,7 +125,6 @@ SelectGene <- function(hvg_list, gene_all = NULL, num = 4000){
 #'
 #' @return Character vector of selected genes.
 #'
-#' @author Jingsi Ming
 #' @seealso \code{\link{prep_data}}
 #' @export
 Select_hvg <- function(file_names, file_path, method, hvg_genes = 4000){
