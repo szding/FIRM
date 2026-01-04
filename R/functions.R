@@ -1,6 +1,6 @@
 #' Data preprocessing for FIRM integration
 #'
-#' Performs a standard Seurat workflow:  normalization, scaling and
+#' Performs a standard Seurat workflow: normalization, scaling and
 #' selection of the top 4 000 highly-variable genes (HVGs).
 #'
 #' @param counts          Raw count matrix (genes × cells) or \code{dgCMatrix}.
@@ -25,7 +25,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' data("ExampleData")          # provided with FIRM
+#' data("ExampleData")
 #' prep_SS2  <- prep_data(SS2)
 #' Dataset1  <- prep_SS2$Dataset
 #' hvg1      <- prep_SS2$hvg
@@ -50,9 +50,9 @@ prep_data <- function(counts, file_path = NULL, file_name = NULL, hvg_genes = 40
                                   layer = "data", verbose = FALSE)
   Dataset <- ScaleData(Dataset, features = rownames(Dataset),
                        layer = "data", do.center = FALSE, verbose = FALSE)
-  
+
   hvg <- VariableFeatures(Dataset)
-  
+
   return(list(Dataset = Dataset, hvg = hvg))
 }
 

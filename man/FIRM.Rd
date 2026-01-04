@@ -23,7 +23,7 @@ FIRM(
 \item{tenx}{\code{Seurat} object for query dataset (e.g. 10x Genomics).}
 
 \item{hvg1, hvg2}{Character vectors giving the high-variable gene names
-selected in \code{SS2} and \code{tenx}, respectively.}
+selected in SS2 and tenx, respectively.}
 
 \item{dims}{Integer scalar, number of principal components to use
 during integration.}
@@ -82,7 +82,7 @@ PCA; if correction does not improve mixing the latter is returned.
 \examples{
 \dontrun{
 library(Seurat)
-data("ExampleData")          # provided by FIRM package
+data("ExampleData")
 SS2  <- ExampleData$SS2
 tenx <- ExampleData$tenx
 hvg1 <- VariableFeatures(SS2)
@@ -101,5 +101,5 @@ str(res)
 Ming, J., Lin, Z., Zhao, J., Wan, X., Ezran, C., Liu, S., ... & TTM Consortium. (2022). FIRM: Flexible integration of single-cell RNA-sequencing data for large-scale multi-tissue cell atlas datasets. \emph{Briefings in bioinformatics}, 23(5).
 }
 \seealso{
-\code{\link{prep_data}} for preprocessing.
+\code{\link{prep_data}} for Data preprocessing.
 }

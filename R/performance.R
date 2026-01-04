@@ -1,3 +1,26 @@
+#' Example single-cell datasets
+#'
+#' A list of Seurat objects and corresponding metadata from two 10x Genomics
+#' peripheral blood samples (SS2 and tenx).
+#'
+#' @format A list of 4 elements:
+#' \describe{
+#'   \item{SS2}{Seurat object from Smart-seq2 platform}
+#'   \item{tenx}{Seurat object from 10x Chromium platform}
+#'   \item{meta_SS2}{data.frame, cell-level metadata for SS2}
+#'   \item{meta_tenx}{data.frame, cell-level metadata for tenx}
+#' }
+#' @source \url{https://github.com/szding/FIRM/data }
+#' @examples
+#' \dontrun{
+#' data("ExampleData")
+#' names(ExampleData)
+#' head(ExampleData$meta_SS2)
+#' }
+#' @keywords datasets
+"ExampleData"
+
+
 #' k-NN Mixing Metric
 #'
 #' Evaluate the degree of mixing between two or more datasets in a low-dimensional embedding.
@@ -7,9 +30,9 @@
 #' @param dataset_list    Factor or character vector of length n indicating which dataset
 #'                        each sample comes from.
 #' @param k               Positive integer.  The rank of the within-dataset neighbour to look for
-#'                        (default 5).  
+#'                        (default 5).
 #' @param max.k           Positive integer.  Total number of nearest neighbours to compute
-#'                        (default 300).  
+#'                        (default 300).
 #' @return                Named numeric vector with one entry per unique level of
 #'                        `dataset_list`.  The entry is the median position (among
 #'                        1 … max.k) of the k-th within-dataset neighbour across all
@@ -67,7 +90,7 @@ Mixing_Metric <- function(embedding, dataset_list, k = 5, max.k = 300) {
 #'
 #' @rdname Local_Struct
 #' @export
-Local_Struct <- function(SS2, tenx, integrated, dims = 30, emb_key = "pca", 
+Local_Struct <- function(SS2, tenx, integrated, dims = 30, emb_key = "pca",
                          batch_key = "dataset", neighbors = 20) {
   nn.SS2 <- RANN::nn2(Embeddings(SS2, reduction = emb_key)[, 1:dims], k = neighbors)$nn.idx
   nn.tenx <- RANN::nn2(Embeddings(tenx, reduction = emb_key)[, 1:dims], k = neighbors)$nn.idx
@@ -108,24 +131,24 @@ Local_Struct <- function(SS2, tenx, integrated, dims = 30, emb_key = "pca",
 #'
 #' @rdname label_trans
 #' @export
-label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation", 
+label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
                         emb_key = "pca", batch_key = "dataset", k = 10){
   set.seed(0)
 
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
-  
+
   ref_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == ref), ]
   query_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == query), ]
   nn <- RANN::nn2(data = ref_embeddings, query = query_embeddings, k = k)
-  
+
   nn_anno <- matrix(anno_tenx[as.vector(nn$nn.idx)], nrow = nrow(nn$nn.idx), ncol = ncol(nn$nn.idx))
-  
+
   nn_table <- apply(nn_anno, 1, table)
-  
+
   pred_anno_SS2 <- as.character(lapply(nn_table, function(x) names(x)[which.max(x)]))
-  
+
   names(pred_anno_SS2) <- colnames(integrated)[which(integrated[[batch_key]] == query)]
-  
+
   return(pred_anno = pred_anno_SS2)
 }
 
@@ -151,22 +174,22 @@ label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #'
 #' @rdname match_score
 #' @export
-match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation", 
+match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
                         emb_key = "pca", batch_key = "dataset", k = 10){
   set.seed(0)
-  
+
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
-  
+
   ref_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == ref), ]
   query_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == query), ]
   nn <- RANN::nn2(data = ref_embeddings, query = query_embeddings, k = k)
-  
+
   nn_SS2 <- RANN::nn2(data = query_embeddings, query = query_embeddings, k = k)
-  
+
   metric <- rowMeans(nn_SS2$nn.dists[, -1]) / rowMeans(nn$nn.dists)
 
   names(metric) <- rownames(query_embeddings)
-  
+
   return(metric = metric)
 }
 
@@ -192,28 +215,28 @@ match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #'
 #' @rdname label_trans_prob
 #' @export
-label_trans_prob <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation", 
+label_trans_prob <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
                              emb_key = "pca", batch_key = "dataset", k = 10){
   set.seed(0)
-  
+
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
-  
+
   ref_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == ref), ]
   query_embeddings <- Embeddings(integrated, reduction = emb_key)[which(integrated[[batch_key]] == query), ]
 
   nn <- RANN::nn2(data = ref_embeddings, query = query_embeddings, k = k)
 
   nn_anno <- matrix(anno_tenx[as.vector(nn$nn.idx)], nrow = nrow(nn$nn.idx), ncol = ncol(nn$nn.idx))
-  
+
   nn_table <- apply(nn_anno, 1, table)
-  
+
   nn_prob <- lapply(nn_table, function(x) x/sum(x))
-  
+
   anno_SS2_prob <- matrix(0, nrow = length(nn_prob), ncol = length(unique(anno_tenx)))
-  
+
   rownames(anno_SS2_prob) <- rownames(query_embeddings)
-  colnames(anno_SS2_prob) <- unique(anno_tenx)  
-  
+  colnames(anno_SS2_prob) <- unique(anno_tenx)
+
   for (i in 1:length(nn_prob)){
     anno_SS2_prob[i, names(nn_prob[[i]])] <- nn_prob[[i]]
   }

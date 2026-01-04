@@ -28,12 +28,12 @@ A named list with elements
          }
 }
 \description{
-Performs a standard Seurat workflow:  normalization, scaling and
+Performs a standard Seurat workflow: normalization, scaling and
 selection of the top 4 000 highly-variable genes (HVGs).
 }
 \examples{
 \dontrun{
-data("ExampleData")          # provided with FIRM
+data("ExampleData")
 prep_SS2  <- prep_data(SS2)
 Dataset1  <- prep_SS2$Dataset
 hvg1      <- prep_SS2$hvg

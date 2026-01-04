@@ -1,7 +1,6 @@
 #' @useDynLib FIRM, .registration = TRUE
 NULL
 
-
 #' Flexible Integration of Single-Cell RNA-Seq Data
 #'
 #' Performs unsupervised integration of two single-cell RNA-seq datasets
@@ -13,7 +12,7 @@ NULL
 #' @param SS2 \code{Seurat} object for reference dataset (e.g. Smart-seq2).
 #' @param tenx \code{Seurat} object for query dataset (e.g. 10x Genomics).
 #' @param hvg1,hvg2 Character vectors giving the high-variable gene names
-#'   selected in \code{SS2} and \code{tenx}, respectively.
+#'   selected in SS2 and tenx, respectively.
 #' @param dims Integer scalar, number of principal components to use
 #'   during integration.
 #' @param all_genes Logical scalar.  If \code{TRUE} the integration is
@@ -58,7 +57,7 @@ NULL
 #' PCA; if correction does not improve mixing the latter is returned.
 #'
 #' @seealso
-#' \code{\link{prep_data}} for preprocessing.
+#' \code{\link{prep_data}} for Data preprocessing.
 #'
 #' @references
 #' Ming, J., Lin, Z., Zhao, J., Wan, X., Ezran, C., Liu, S., ... & TTM Consortium. (2022). FIRM: Flexible integration of single-cell RNA-sequencing data for large-scale multi-tissue cell atlas datasets. \emph{Briefings in bioinformatics}, 23(5).
@@ -66,7 +65,7 @@ NULL
 #' @examples
 #' \dontrun{
 #' library(Seurat)
-#' data("ExampleData")          # provided by FIRM package
+#' data("ExampleData")
 #' SS2  <- ExampleData$SS2
 #' tenx <- ExampleData$tenx
 #' hvg1 <- VariableFeatures(SS2)
@@ -88,7 +87,7 @@ NULL
 FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = seq(0.1, 2, 0.1),
                  res_seq_tenx = seq(0.1, 2, 0.1),
                  coreNum = 1, verbose = FALSE){
-  
+
   set.seed(0)
   hvg <- intersect(hvg1, hvg2)
   gene_all <- union(rownames(SS2), rownames(tenx))
@@ -105,7 +104,7 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
   SS2 <- GetAssayData(SS2, assay = "RNA", layer = "scale.data")
   tenx <- GetAssayData(tenx, assay = "RNA", layer = "scale.data")
 
-    
+
   gc()
 
   res_SS2 <- NULL
@@ -140,15 +139,15 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
     integrated_PCA[rownames(tenx), (ncol(SS2)+1):(ncol(SS2)+ncol(tenx))] <- tenx
   }
 
-  integrated_PCA_obj <- CreateSeuratObject(counts = integrated_PCA) 
+  integrated_PCA_obj <- CreateSeuratObject(counts = integrated_PCA)
   integrated_PCA_obj <- NormalizeData(integrated_PCA_obj)
   integrated_PCA_obj <- SetAssayData(object = integrated_PCA_obj, assay = "RNA", layer = "data", new.data = integrated_PCA)
   integrated_PCA_obj <- ScaleData(integrated_PCA_obj, do.center = FALSE, verbose = FALSE)
   integrated_PCA <- GetAssayData(integrated_PCA_obj, assay = "RNA", layer = "scale.data")
 
-    
+
   dataset_list_PCA <- c(rep(1, ncol(SS2)), rep(2, ncol(tenx)))
-  
+
   if (length(res_SS2) == 0){
     if (verbose == TRUE){
       return(list(integrated = integrated_PCA))
@@ -157,7 +156,7 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
       return(integrated_PCA)
     }
   }
-    
+
   for (i in 1:length(res_seq_tenx)){
     if (is.null(tryCatch(tenx_FindClusters <- FindClusters(tenx_snn, resolution = res_seq_tenx[i], verbose = FALSE)[, 1], error = function(e){}))){
       break
@@ -209,23 +208,23 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
     }
   } else {
     gene_all_num <- length(gene_all)
-    
+
     tmp <- seq(1, gene_all_num, 1)
     names(tmp) <- gene_all
     gene_all_ind_SS2 <- as.numeric(tmp[rownames(SS2)[which(rownames(SS2) %in% gene_all)]])
     tmp <- seq(1, nrow(SS2), 1)
     names(tmp) <- rownames(SS2)
     hvg_ind_SS2 <- as.numeric(tmp[hvg])
-    
+
     tmp <- seq(1, gene_all_num, 1)
     names(tmp) <- gene_all
     gene_all_ind_tenx <- as.numeric(tmp[rownames(tenx)[which(rownames(tenx) %in% gene_all)]])
     tmp <- seq(1, nrow(tenx), 1)
     names(tmp) <- rownames(tenx)
     hvg_ind_tenx <- as.numeric(tmp[hvg])
-    
+
     gene_all_hvg <- which(gene_all %in% hvg)
-    
+
     if (ncol(SS2) < ncol(tenx)){
       Dataset1 <- SS2
       Dataset2 <- tenx
@@ -255,7 +254,7 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
   quantile_default <- 0.75
   max.k <- 300
   rept <- 50
-  
+
   if ((length(res1)*length(res2)) == 1){
     if (all_genes == FALSE){
       result <- FIRM_res_hvg(Dataset1, FindClusters1, Dataset2, FindClusters2,
@@ -267,11 +266,11 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
                          gene_all_ind1, gene_all_ind2,
                          quantile_default = quantile_default,rept_ds = rept)
     }
-      
+
     integrated_PCA_obj <- RunPCA(integrated_PCA_obj, features = hvg, npcs = dims, verbose = FALSE)
     Metric_PCA <- mean(Mixing_Metric(Embeddings(integrated_PCA_obj, "pca"), dataset_list_PCA, max.k = max.k))
-    rm(integrated_PCA_obj) 
-    
+    rm(integrated_PCA_obj)
+
     if (all(result$integrated == 0)){
       if (verbose == TRUE){
         return(list(integrated = integrated_PCA, Metric_PCA = Metric_PCA))
@@ -289,17 +288,17 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
     }
     colnames(integrated_FIRM) <- c(colnames(Dataset1), colnames(Dataset2))
 
-    integrated_FIRM_obj <- CreateSeuratObject(counts = integrated_FIRM)  
+    integrated_FIRM_obj <- CreateSeuratObject(counts = integrated_FIRM)
     integrated_FIRM_obj <- NormalizeData(integrated_FIRM_obj)
     integrated_FIRM_obj <- SetAssayData(object = integrated_FIRM_obj, assay = "RNA", layer = "data", new.data = integrated_FIRM)
     integrated_FIRM_obj <- ScaleData(integrated_FIRM_obj, do.center = FALSE, verbose = FALSE)
     integrated_FIRM <- GetAssayData(integrated_FIRM_obj, assay = "RNA", layer = "scale.data")
     integrated_FIRM_obj <- RunPCA(integrated_FIRM[hvg, ], features = hvg, npcs = dims, verbose = FALSE)
-    
+
     pca_embeddings <- Embeddings(integrated_FIRM_obj, reduction = "pca")
     rm(integrated_FIRM_obj)
     Metric_FIRM <- mean(Mixing_Metric(pca_embeddings, dataset_list, max.k = max.k))
-      
+
     gc()
 
     if(min(Metric_FIRM) >= Metric_PCA){
@@ -318,7 +317,7 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
       }
     }
   }
-  
+
   result <- FIRM_res_all(Dataset1[hvg, ], FindClusters1, Dataset2[hvg, ], FindClusters2,
                          dims, quantile_default = quantile_default,rept_ds = rept, coreNum = coreNum)
 
@@ -382,13 +381,13 @@ FIRM <- function(SS2, tenx, hvg1, hvg2, dims, all_genes = FALSE, res_seq_SS2 = s
     }
     colnames(integrated_FIRM) <- c(colnames(Dataset1), colnames(Dataset2))
 
-    integrated_FIRM_obj <- CreateSeuratObject(counts = integrated_FIRM)  
+    integrated_FIRM_obj <- CreateSeuratObject(counts = integrated_FIRM)
     integrated_FIRM_obj <- NormalizeData(integrated_FIRM_obj)
     integrated_FIRM_obj <- SetAssayData(object = integrated_FIRM_obj, assay = "RNA", layer = "data", new.data = integrated_FIRM)
     integrated_FIRM_obj <- ScaleData(integrated_FIRM_obj, do.center = FALSE, verbose = FALSE)
     integrated_FIRM <- GetAssayData(integrated_FIRM_obj, assay = "RNA", layer = "scale.data")
     rm(integrated_FIRM_obj)
-      
+
     gc()
 
     if (verbose == TRUE){
