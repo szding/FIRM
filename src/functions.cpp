@@ -1,3 +1,5 @@
+#define EIGEN_VECTORIZE_STD_VECTOR
+#include <Eigen/Core>
 #include "functions.h"
 #include <RcppEigen.h>
 
@@ -6,18 +8,18 @@
 mat scale_PCA(mat x, const int dims){
 
   mat x_scaled = x.each_col()/stddev(x, 0, 1).as_col();
-    
+
   mat xT = x_scaled.t();
-    
+
   Eigen::MatrixXd Xm = Eigen::Map<Eigen::MatrixXd>(xT.memptr(), xT.n_rows, xT.n_cols);
-    
+
   RandomPCA rpca;
   rpca.stand_method_x = 0;
   rpca.divisor = 0;
   rpca.verbose = FALSE;
-    
+
   rpca.pca_fast(Xm, 0, dims, 1e2, 1e-4, 1, FALSE);
-    
+
   mat embedding = arma::mat(rpca.Px.data(), rpca.Px.rows(), rpca.Px.cols(),
                             true, false);
   //mat embedding = arma::mat(rpca.Px.data(), rpca.Px.rows(), rpca.Px.cols(),
@@ -43,16 +45,16 @@ mat integrated_scale_PCA(mat x, const int dims){
   x_scaled(find(x_scaled > 10)).fill(10);
 
   mat xT = x_scaled.t();
-    
+
   Eigen::MatrixXd Xm = Eigen::Map<Eigen::MatrixXd>(xT.memptr(), xT.n_rows, xT.n_cols);
-    
+
   RandomPCA rpca;
   rpca.stand_method_x = 0;
   rpca.divisor = 0;
   rpca.verbose = FALSE;
-    
+
   rpca.pca_fast(Xm, 0, dims, 1e2, 1e-4, 1, FALSE);
-    
+
   mat embedding = arma::mat(rpca.Px.data(), rpca.Px.rows(), rpca.Px.cols(),
                             true, false);
   //mat embedding = arma::mat(rpca.Px.data(), rpca.Px.rows(), rpca.Px.cols(),
@@ -86,7 +88,7 @@ mat integrated_scale_fill(mat SS2, mat tenx, vec sd_SS2, vec sd_tenx, uword gene
   integrated_tenx.rows(gene_all_ind_tenx-1) = tenx.each_col()/(sd_tenx + (sd_tenx == 0));
   integrated.cols(0, nSS2-1) = integrated_SS2;
   integrated.cols(nSS2, nSS2+ntenx-1) = integrated_tenx;
-    
+
   return integrated;
 }
 
@@ -127,11 +129,11 @@ mat integrated_fill_hvg_PCA(mat SS2, mat tenx, int dims){
 }
 
 mat integrated_scale_fill_hvg(mat SS2, mat tenx, vec sd_SS2, vec sd_tenx, int dims){
-  
+
   mat integrated_SS2 = SS2.each_col()/(sd_SS2 + (sd_SS2 == 0));
   mat integrated_tenx = tenx.each_col()/(sd_tenx + (sd_tenx == 0));
   mat integrated = join_rows(integrated_SS2, integrated_tenx);
-  
+
   return integrated;
 }
 
@@ -140,7 +142,7 @@ mat integrated_scale_fill_hvg_PCA(mat SS2, mat tenx, vec sd_SS2, vec sd_tenx, in
   mat integrated_SS2 = SS2.each_col()/(sd_SS2 + (sd_SS2 == 0));
   mat integrated_tenx = tenx.each_col()/(sd_tenx + (sd_tenx == 0));
   mat integrated = join_rows(integrated_SS2, integrated_tenx);
-  
+
   mat integrated_embedding = integrated_scale_PCA(integrated, dims);
 
   return integrated_embedding;
@@ -150,15 +152,15 @@ mat integrated_scale_fill_hvg_PCA(mat SS2, mat tenx, vec sd_SS2, vec sd_tenx, in
 //   umat SS2_paired_name_mat = reshape(SS2_paired_name_ini, 1, SS2_paired_name_ini.n_elem);
 //   SS2_paired_name_mat.shed_col(ind);
 //   SS2_paired_name_ini = SS2_paired_name_mat.as_col();
-//   
+//
 //   umat tenx_paired_name_mat = reshape(tenx_paired_name_ini, 1, tenx_paired_name_ini.n_elem);
 //   tenx_paired_name_mat.shed_col(ind);
 //   tenx_paired_name_ini = tenx_paired_name_mat.as_col();
-//   
+//
 //   umat num_SS2_mat = reshape(num_SS2_ini, 1, num_SS2_ini.n_elem);
 //   num_SS2_mat.shed_col(ind);
 //   num_SS2_ini = num_SS2_mat.as_col();
-//   
+//
 //   umat num_tenx_mat = reshape(num_tenx_ini, 1, num_tenx_ini.n_elem);
 //   num_tenx_mat.shed_col(ind);
 //   num_tenx_ini = num_tenx_mat.as_col();
@@ -167,7 +169,7 @@ mat integrated_scale_fill_hvg_PCA(mat SS2, mat tenx, vec sd_SS2, vec sd_tenx, in
 void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uvec& num_tenx,
                uvec num_SS2_ini, uvec num_tenx_ini, uvec SS2_paired_name_ini, uvec tenx_paired_name_ini){
   uword n_paired = num_SS2_ini.n_elem;
-  
+
   for (int i = 0; i < n_paired-1; i++){
     // if the smallest clusters in SS2 and 10X are paired
     if (num_SS2_ini.index_min() == num_tenx_ini.index_min()){
@@ -176,26 +178,26 @@ void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uve
       prop_join.col(0) = conv_to<vec>::from(num_SS2_ini)/num_SS2_ini(ind);
       prop_join.col(1) = conv_to<vec>::from(num_tenx_ini)/num_tenx_ini(ind);
       vec prop_paired = min(prop_join, 1).as_col();
-      
+
       // If more than 75% cells are removed, we don't consider this pair in subsampling
       if((sum(round(prop_paired*num_SS2_ini(ind)))/sum(num_SS2_ini) < 0.25) ||
          (sum(round(prop_paired*num_tenx_ini(ind)))/sum(num_tenx_ini) < 0.25)){
         umat SS2_paired_name_mat = reshape(SS2_paired_name_ini, 1, SS2_paired_name_ini.n_elem);
         SS2_paired_name_mat.shed_col(ind);
         SS2_paired_name_ini = SS2_paired_name_mat.as_col();
-        
+
         umat tenx_paired_name_mat = reshape(tenx_paired_name_ini, 1, tenx_paired_name_ini.n_elem);
         tenx_paired_name_mat.shed_col(ind);
         tenx_paired_name_ini = tenx_paired_name_mat.as_col();
-        
+
         umat num_SS2_mat = reshape(num_SS2_ini, 1, num_SS2_ini.n_elem);
         num_SS2_mat.shed_col(ind);
         num_SS2_ini = num_SS2_mat.as_col();
-        
+
         umat num_tenx_mat = reshape(num_tenx_ini, 1, num_tenx_ini.n_elem);
         num_tenx_mat.shed_col(ind);
         num_tenx_ini = num_tenx_mat.as_col();
-        
+
         SS2_paired_name = SS2_paired_name_ini;
         tenx_paired_name = tenx_paired_name_ini;
       } else {
@@ -210,7 +212,7 @@ void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uve
       //choose which one should be the smallest cluster after subsampling based on the No. of cells kept
       uword ind_SS2 = num_SS2_ini.index_min();
       uword ind_tenx = num_tenx_ini.index_min();
-      
+
       mat prop_join1 = zeros<mat>(num_SS2_ini.n_elem, 2);
       prop_join1.col(0) = conv_to<vec>::from(num_SS2_ini)/num_SS2_ini(ind_SS2);
       prop_join1.col(1) = conv_to<vec>::from(num_tenx_ini)/num_tenx_ini(ind_tenx)/num_SS2_ini(ind_SS2)*num_SS2_ini(ind_tenx);
@@ -218,7 +220,7 @@ void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uve
       vec prop_paired1 = min(prop_join1, 1).as_col();
       uvec num_SS21 = conv_to<uvec>::from(floor(prop_paired1*num_SS2_ini(ind_SS2)));
       uvec num_tenx1 = conv_to<uvec>::from(floor(prop_paired1*num_tenx_ini(ind_tenx)*num_SS2_ini(ind_SS2)/num_SS2_ini(ind_tenx)));
-      
+
       mat prop_join2 = zeros<mat>(num_tenx_ini.n_elem, 2);
       prop_join2.col(0) = conv_to<vec>::from(num_SS2_ini)/num_SS2_ini(ind_SS2)/num_tenx_ini(ind_tenx)*num_tenx_ini(ind_SS2);
       prop_join2(ind_tenx, 0) = 1;
@@ -226,28 +228,28 @@ void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uve
       vec prop_paired2 = min(prop_join2, 1).as_col();
       uvec num_SS22 = conv_to<uvec>::from(floor(prop_paired2*num_SS2_ini(ind_SS2)*num_tenx_ini(ind_tenx)/num_tenx_ini(ind_SS2)));
       uvec num_tenx2 = conv_to<uvec>::from(floor(prop_paired2*num_tenx_ini(ind_tenx)));
-    
+
       if (sum(num_SS21 + num_tenx1) > sum(num_SS22 + num_tenx2)){
         if ((sum(num_SS21)/sum(num_SS2_ini) < 0.5) || (sum(num_tenx1)/sum(num_tenx_ini) < 0.25)){
           umat SS2_paired_name_mat = reshape(SS2_paired_name_ini, 1, SS2_paired_name_ini.n_elem);
           SS2_paired_name_mat.shed_col(ind_SS2);
           SS2_paired_name_ini = SS2_paired_name_mat.as_col();
-          
+
           umat tenx_paired_name_mat = reshape(tenx_paired_name_ini, 1, tenx_paired_name_ini.n_elem);
           tenx_paired_name_mat.shed_col(ind_SS2);
           tenx_paired_name_ini = tenx_paired_name_mat.as_col();
-          
+
           umat num_SS2_mat = reshape(num_SS2_ini, 1, num_SS2_ini.n_elem);
           num_SS2_mat.shed_col(ind_SS2);
           num_SS2_ini = num_SS2_mat.as_col();
-          
+
           umat num_tenx_mat = reshape(num_tenx_ini, 1, num_tenx_ini.n_elem);
           num_tenx_mat.shed_col(ind_SS2);
           num_tenx_ini = num_tenx_mat.as_col();
-          
+
           SS2_paired_name = SS2_paired_name_ini;
           tenx_paired_name = tenx_paired_name_ini;
-          
+
         } else{
           num_SS2 = num_SS21;
           num_tenx = num_tenx1;
@@ -260,19 +262,19 @@ void pair_info(uvec& SS2_paired_name, uvec& tenx_paired_name, uvec& num_SS2, uve
           umat SS2_paired_name_mat = reshape(SS2_paired_name_ini, 1, SS2_paired_name_ini.n_elem);
           SS2_paired_name_mat.shed_col(ind_tenx);
           SS2_paired_name_ini = SS2_paired_name_mat.as_col();
-          
+
           umat tenx_paired_name_mat = reshape(tenx_paired_name_ini, 1, tenx_paired_name_ini.n_elem);
           tenx_paired_name_mat.shed_col(ind_tenx);
           tenx_paired_name_ini = tenx_paired_name_mat.as_col();
-          
+
           umat num_SS2_mat = reshape(num_SS2_ini, 1, num_SS2_ini.n_elem);
           num_SS2_mat.shed_col(ind_tenx);
           num_SS2_ini = num_SS2_mat.as_col();
-          
+
           umat num_tenx_mat = reshape(num_tenx_ini, 1, num_tenx_ini.n_elem);
           num_tenx_mat.shed_col(ind_tenx);
           num_tenx_ini = num_tenx_mat.as_col();
-          
+
           SS2_paired_name = SS2_paired_name_ini;
           tenx_paired_name = tenx_paired_name_ini;
         } else{
