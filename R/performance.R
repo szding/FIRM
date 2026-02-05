@@ -11,11 +11,9 @@
 #'   \item{meta_tenx}{data.frame, cell-level metadata for tenx}
 #' }
 #' @examples
-#' \dontrun{
 #' data("ExampleData")
 #' names(ExampleData)
 #' head(ExampleData$meta_SS2)
-#' }
 #' @keywords datasets
 "ExampleData"
 
@@ -32,6 +30,7 @@
 #'                        (default 5).
 #' @param max.k           Positive integer.  Total number of nearest neighbours to compute
 #'                        (default 300).
+#' @param seed Integer, random seed for reproducibility (optional). If NULL, uses current random state.
 #' @return                Named numeric vector with one entry per unique level of
 #'                        `dataset_list`.  The entry is the median position (among
 #'                        1 … max.k) of the k-th within-dataset neighbour across all
@@ -41,8 +40,10 @@
 #' @importFrom stats median
 #' @rdname Mixing_Metric
 #' @export
-Mixing_Metric <- function(embedding, dataset_list, k = 5, max.k = 300) {
-  set.seed(0)
+Mixing_Metric <- function(embedding, dataset_list, k = 5, max.k = 300, seed = NULL) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   nn <- RANN::nn2(embedding, k = max.k)$nn.idx[, -1]
 
   mixing <- sapply(
@@ -123,6 +124,7 @@ Local_Struct <- function(SS2, tenx, integrated, dims = 30, emb_key = "pca",
 #' @param emb_key  Name of the reduction to use (default \code{"pca"}).
 #' @param batch_key  Name of the meta-data column that indicates dataset/batch
 #' @param k  Number of nearest neighbours to vote (default 10).
+#' @param seed Integer, random seed for reproducibility (optional). If NULL, uses current random state.
 #'
 #' @return
 #' Named character vector: predicted label for each query cell (names are
@@ -131,8 +133,10 @@ Local_Struct <- function(SS2, tenx, integrated, dims = 30, emb_key = "pca",
 #' @rdname label_trans
 #' @export
 label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
-                        emb_key = "pca", batch_key = "dataset", k = 10){
-  set.seed(0)
+                        emb_key = "pca", batch_key = "dataset", k = 10, seed = NULL){
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
 
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
 
@@ -167,6 +171,7 @@ label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #' @param batch_key  Name of the meta-data column that indicates dataset/batch
 #'   origin (default \code{"dataset"}).
 #' @param k  Number of nearest neighbours to consider (default \code{10}).
+#' @param seed Integer, random seed for reproducibility (optional). If NULL, uses current random state.
 #'
 #' @return
 #' Named numeric vector of length equal to the number of query cells.
@@ -174,8 +179,10 @@ label_trans <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #' @rdname match_score
 #' @export
 match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
-                        emb_key = "pca", batch_key = "dataset", k = 10){
-  set.seed(0)
+                        emb_key = "pca", batch_key = "dataset", k = 10, seed = NULL){
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
 
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
 
@@ -207,6 +214,7 @@ match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #' @param batch_key  Name of the meta-data column that indicates dataset/batch
 #'   origin (default \code{"dataset"}).
 #' @param k  Number of nearest neighbours to consider (default \code{10}).
+#' @param seed Integer, random seed for reproducibility (optional). If NULL, uses current random state.
 #'
 #' @return
 #' Numeric matrix (query-cells × unique-labels).  Row sums equal 1.
@@ -215,8 +223,10 @@ match_score <- function(integrated, ref = "10X", query = "SS2", label_key = "ann
 #' @rdname label_trans_prob
 #' @export
 label_trans_prob <- function(integrated, ref = "10X", query = "SS2", label_key = "annotation",
-                             emb_key = "pca", batch_key = "dataset", k = 10){
-  set.seed(0)
+                             emb_key = "pca", batch_key = "dataset", k = 10, seed = NULL){
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
 
   anno_tenx <- integrated[[label_key]][which(integrated[[batch_key]] == ref)]
 

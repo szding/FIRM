@@ -21,10 +21,8 @@ A list of Seurat objects and corresponding metadata from two 10x Genomics
 peripheral blood samples (SS2 and tenx).
 }
 \examples{
-\dontrun{
 data("ExampleData")
 names(ExampleData)
 head(ExampleData$meta_SS2)
-}
 }
 \keyword{datasets}

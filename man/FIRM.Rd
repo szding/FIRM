@@ -14,7 +14,8 @@ FIRM(
   res_seq_SS2 = seq(0.1, 2, 0.1),
   res_seq_tenx = seq(0.1, 2, 0.1),
   coreNum = 1,
-  verbose = FALSE
+  verbose = FALSE,
+  seed = NULL
 )
 }
 \arguments{
@@ -42,6 +43,8 @@ screening.}
 \item{verbose}{Logical scalar.  If \code{TRUE} a list containing the
 integrated matrix and quality metrics is returned; otherwise only
 the integrated expression matrix is returned.}
+
+\item{seed}{Integer, random seed for reproducibility (optional). If NULL, uses current random state.}
 }
 \value{
 By default (\code{verbose = FALSE}) a single \code{matrix} of
@@ -92,11 +95,11 @@ Dataset2  <- prep_tenx$Dataset
 hvg2      <- prep_tenx$hvg
 
 res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
-           dims = 15, all_genes = FALSE)
+           dims = 15, all_genes = FALSE, seed = 42)
 
 # with full diagnostics
 res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
-            dims = 30, all_genes = TRUE, verbose = TRUE)
+            dims = 30, all_genes = TRUE, verbose = TRUE, seed = 42)
 }
 
 }

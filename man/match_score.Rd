@@ -11,7 +11,8 @@ match_score(
   label_key = "annotation",
   emb_key = "pca",
   batch_key = "dataset",
-  k = 10
+  k = 10,
+  seed = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ information (default \code{"annotation"}).}
 origin (default \code{"dataset"}).}
 
 \item{k}{Number of nearest neighbours to consider (default \code{10}).}
+
+\item{seed}{Integer, random seed for reproducibility (optional). If NULL, uses current random state.}
 }
 \value{
 Named numeric vector of length equal to the number of query cells.

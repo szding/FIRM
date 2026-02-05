@@ -4,8 +4,9 @@ Title: Flexible Integration of Single-Cell RNA-Seq Data
 Version: 0.1.0
 Authors@R: c(person(given = "Jingsi", family = "Ming", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7059-4156"), 
                     email = "jsming@fem.ecnu.edu.cn"))
+Maintainer: Jingsi Ming <jsming@fem.ecnu.edu.cn>
 Description: Provides functions for the flexible integration of heterogeneous scRNA-seq datasets across multiple tissue types, platforms, and experimental batches. Implements the method described in Ming (2022) <doi:10.1093/bib/bbac167>.
-URL: https://github.com/satijalab/sctransform
+URL: https://github.com/mingjingsi/FIRM
 License: GPL-3  
 Encoding: UTF-8
 LazyData: true

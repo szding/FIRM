@@ -24,7 +24,7 @@
 #' @seealso  \code{\link{FIRM}} for the integration step.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data("ExampleData")
 #' prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
 #' Dataset1  <- prep_SS2$Dataset

@@ -4,7 +4,7 @@
 \alias{Mixing_Metric}
 \title{k-NN Mixing Metric}
 \usage{
-Mixing_Metric(embedding, dataset_list, k = 5, max.k = 300)
+Mixing_Metric(embedding, dataset_list, k = 5, max.k = 300, seed = NULL)
 }
 \arguments{
 \item{embedding}{Numeric matrix (n × d) where each row is the coordinates of one
@@ -18,6 +18,8 @@ each sample comes from.}
 
 \item{max.k}{Positive integer.  Total number of nearest neighbours to compute
 (default 300).}
+
+\item{seed}{Integer, random seed for reproducibility (optional). If NULL, uses current random state.}
 }
 \value{
 Named numeric vector with one entry per unique level of

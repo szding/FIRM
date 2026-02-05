@@ -11,7 +11,8 @@ label_trans(
   label_key = "annotation",
   emb_key = "pca",
   batch_key = "dataset",
-  k = 10
+  k = 10,
+  seed = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ meta-data columns \code{dataset} and \code{annotation}.}
 \item{batch_key}{Name of the meta-data column that indicates dataset/batch}
 
 \item{k}{Number of nearest neighbours to vote (default 10).}
+
+\item{seed}{Integer, random seed for reproducibility (optional). If NULL, uses current random state.}
 }
 \value{
 Named character vector: predicted label for each query cell (names are
