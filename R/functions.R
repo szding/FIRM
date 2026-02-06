@@ -19,6 +19,9 @@
 #'
 #' @examples
 #' \donttest{
+#' set.seed(42)
+#' library(Seurat)
+#' library(FIRM)
 #' data("ExampleData")
 #' prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
 #' Dataset1  <- prep_SS2$Dataset
