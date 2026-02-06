@@ -4,12 +4,6 @@
 #' selection of the top 4 000 highly-variable genes (HVGs).
 #'
 #' @param counts          Raw count matrix (genes × cells) or \code{dgCMatrix}.
-#' @param file_path       Optional directory where results should be **saved**.
-#'                        If \code{NULL} (default) nothing is written to disk.
-#' @param file_name       Optional basename for saved \code{.RData} files.
-#'                        When given, two files are created:
-#'                        \code{<file_name>.RData} (Seurat object) and
-#'                        \code{<file_name>_hvg.RData} (character vector of HVGs).
 #' @param hvg_genes       Target number of genes to return (default 4 000).
 #'
 #' @return  A named list with elements
@@ -33,17 +27,12 @@
 #' prep_tenx <- prep_data(ExampleData$tenx, hvg_genes = 1000)
 #' Dataset2  <- prep_tenx$Dataset
 #' hvg2      <- prep_tenx$hvg
-#'
-#' # save results to disk
-#' prep_data(ExampleData$tenx,
-#'           file_path = tempdir(),
-#'           file_name = "tenx_processed")
 #' }
 #'
 #' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
 #'   ScaleData VariableFeatures
 #' @export
-prep_data <- function(counts, file_path = NULL, file_name = NULL, hvg_genes = 4000) {
+prep_data <- function(counts, hvg_genes = 4000) {
   Dataset <- CreateSeuratObject(counts = counts)
   Dataset <- NormalizeData(Dataset, layer = "counts", verbose = FALSE)
   Dataset <- FindVariableFeatures(Dataset, nfeatures = hvg_genes,

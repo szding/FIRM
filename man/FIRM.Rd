@@ -83,23 +83,37 @@ Quality control: the integrated embedding is compared with the naive
 PCA; if correction does not improve mixing the latter is returned.
 }
 \examples{
-\dontrun{
+\donttest{
+# Toy example for quick test (< 5 sec) donttest
+set.seed(42)
+
 library(Seurat)
-data("ExampleData")
-prep_SS2  <- prep_data(ExampleData$SS2, hvg_genes = 1000)
-Dataset1  <- prep_SS2$Dataset
-hvg1      <- prep_SS2$hvg
+library(FIRM)
 
-prep_tenx <- prep_data(ExampleData$tenx, hvg_genes = 1000)
-Dataset2  <- prep_tenx$Dataset
-hvg2      <- prep_tenx$hvg
+# Create small datasets
+n_genes <- 200
+n_cells_ss2 <- 200
+n_cells_tenx <- 200
 
-res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
-           dims = 15, all_genes = FALSE, seed = 42)
+SS2 <- matrix(rpois(n_genes * n_cells_ss2, lambda = 5), nrow = n_genes)
+tenx <- matrix(rpois(n_genes * n_cells_tenx, lambda = 5), nrow = n_genes)
+rownames(SS2) <- rownames(tenx) <- paste0("gene", 1:n_genes)
+colnames(SS2) <- paste0("cell_ss2_", 1:n_cells_ss2)
+colnames(tenx) <- paste0("cell_tenx_", 1:n_cells_tenx)
+SS2 <- as(SS2, "dgCMatrix")
+tenx <- as(tenx, "dgCMatrix")
 
-# with full diagnostics
-res <- FIRM(Dataset1, Dataset2, hvg1, hvg2,
-            dims = 30, all_genes = TRUE, verbose = TRUE, seed = 42)
+prep_SS2 <- prep_data(SS2, hvg_genes = 100)
+Dataset1 <- prep_SS2$Dataset
+hvg1 <- prep_SS2$hvg
+
+prep_tenx <- prep_data(tenx, hvg_genes = 100)
+Dataset2 <- prep_tenx$Dataset
+hvg2 <- prep_tenx$hvg
+
+Dataset <- FIRM(Dataset1, Dataset2, hvg1, hvg2, dims = 2, all_genes = FALSE, coreNum = 1)
+
+dim(Dataset)
 }
 
 }

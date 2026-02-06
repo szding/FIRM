@@ -304,14 +304,14 @@ void FIRM_res::fit_by_thread(int thread_id){
     int total = SS2_FindClusters.n_cols*tenx_FindClusters.n_cols;
     /// Rprintf("thread_id = %d, idx = %d (out of %d), idx1 = %d (out of %d), idx2 = %d (out of %d) \n",
     ////thread_id, idx+1, total, current_idx_SS2+1, SS2_FindClusters.n_cols, current_idx_tenx+1, tenx_FindClusters.n_cols);
-    Rprintf("thread_id = %d, idx = %llu (out of %llu), idx1 = %d (out of %llu), idx2 = %d (out of %llu) \n",
-            thread_id,
-            static_cast<unsigned long long>(idx) + 1ULL,
-            static_cast<unsigned long long>(total),
-            current_idx_SS2 + 1,
-            static_cast<unsigned long long>(SS2_FindClusters.n_cols),
-            current_idx_tenx + 1,
-            static_cast<unsigned long long>(tenx_FindClusters.n_cols));
+    //Rprintf("thread_id = %d, idx = %llu (out of %llu), idx1 = %d (out of %llu), idx2 = %d (out of %llu) \n",
+           // thread_id,
+           // static_cast<unsigned long long>(idx) + 1ULL,
+            //static_cast<unsigned long long>(total),
+            //current_idx_SS2 + 1,
+           // static_cast<unsigned long long>(SS2_FindClusters.n_cols),
+           // current_idx_tenx + 1,
+            //static_cast<unsigned long long>(tenx_FindClusters.n_cols));
     loop_by_thread(idx, current_idx_SS2, current_idx_tenx);
   }
 }
