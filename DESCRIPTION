@@ -2,10 +2,12 @@ Package: FIRM
 Type: Package
 Title: Flexible Integration of Single-Cell RNA-Seq Data
 Version: 0.1.0
-Authors@R: c(person(given = "Jingsi", family = "Ming", role = c("aut", "cre", "cph"),
-                    email = "jsming@fem.ecnu.edu.cn"),
-             person(given = "Gad", family = "Abraham", role = c("ctb", "cph")),
-             person("Netherlands eScience Center", role = "cph"))
+Authors@R: c(person(given = "Jingsi", family = "Ming", email = "jsming@fem.ecnu.edu.cn",
+                    role = c("aut", "cre", "cph"), 
+                    comment = c("R package development and method implementation", 
+                    "ORCID: 0000-0001-7059-4156")),
+             person(given = "Gad", family = "Abraham", role = c("ctb", "cph"), comment = "Original flashpca C++ code for PCA"),
+             person("Netherlands eScience Center", role = "cph", comment = "Copyright holder of flashpca"))
 Maintainer: Jingsi Ming <jsming@fem.ecnu.edu.cn>
 Description: Provides functions for the flexible integration of heterogeneous scRNA-seq datasets across multiple tissue types, platforms, and experimental batches. Implements the method described in Ming (2022) <doi:10.1093/bib/bbac167>. The package incorporates modified C++ source code from the flashpca library (Abraham, 2014-2016 <https://github.com/gabraham/flashpca>) for efficient principal component analysis; see 'inst/COPYRIGHTS' for details on third-party code and modifications. 
 URL: https://github.com/mingjingsi/FIRM
