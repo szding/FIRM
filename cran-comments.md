@@ -15,6 +15,8 @@ This is a resubmission. In this version I have:
 
 * Fixed \dontrun{} usage: replaced with \donttest for examples >5s
 * Removed set.seed() calls from functions; added seed parameter
-* Added proper attribution for flashpca third-party code
+* Added proper attribution for flashpca third-party code:
+  - Gad Abraham [ctb, cph] in Authors@R
+  - Created inst/COPYRIGHTS with modification notes
 * Updated DESCRIPTION: refined author roles, corrected GitHub URL
 
