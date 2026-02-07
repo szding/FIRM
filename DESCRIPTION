@@ -6,6 +6,8 @@ Authors@R: c(person(given = "Jingsi", family = "Ming", email = "jsming@fem.ecnu.
                     role = c("aut", "cre", "cph"), 
                     comment = c("R package development and method implementation", 
                     "ORCID: 0000-0001-7059-4156")),
+             person(given = "Shuzhen", family = "Ding", email = "dszspur@xju.edu.cn",
+                    role = c("ctb"), comment = "R package development and maintenance"),
              person(given = "Gad", family = "Abraham", role = c("ctb", "cph"), comment = "Original flashpca C++ code for PCA"),
              person("Netherlands eScience Center", role = "cph", comment = "Copyright holder of flashpca"))
 Maintainer: Jingsi Ming <jsming@fem.ecnu.edu.cn>
