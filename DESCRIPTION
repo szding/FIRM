@@ -2,28 +2,22 @@ Package: FIRM
 Type: Package
 Title: Flexible Integration of Single-Cell RNA-Seq Data
 Version: 0.1.0
-Authors@R: c(person(given = "Jingsi", family = "Ming", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7059-4156"), 
-                    email = "jsming@fem.ecnu.edu.cn"))
+Authors@R: c(person(given = "Jingsi", family = "Ming", role = c("aut", "cre", "cph"),
+                    email = "jsming@fem.ecnu.edu.cn"),
+             person(given = "Gad", family = "Abraham", role = c("ctb", "cph")),
+             person("Netherlands eScience Center", role = "cph"))
 Maintainer: Jingsi Ming <jsming@fem.ecnu.edu.cn>
-Author: Jingsi Ming [aut, cre] (<https://orcid.org/0000-0001-7059-4156>)
-Description: Provides functions for the flexible integration of heterogeneous scRNA-seq datasets across multiple tissue types, platforms, and experimental batches. Implements the method described in Ming (2022) <doi:10.1093/bib/bbac167>.
+Description: Provides functions for the flexible integration of heterogeneous scRNA-seq datasets across multiple tissue types, platforms, and experimental batches. Implements the method described in Ming (2022) <doi:10.1093/bib/bbac167>. The package incorporates modified C++ source code from the flashpca library (Abraham, 2014-2016 <https://github.com/gabraham/flashpca>) for efficient principal component analysis; see 'inst/COPYRIGHTS' for details on third-party code and modifications. 
 URL: https://github.com/mingjingsi/FIRM
-License: GPL-3  
+BugReports: https://github.com/mingjingsi/FIRM/issues
+License: GPL-3
 Encoding: UTF-8
+Copyright: See file inst/COPYRIGHTS for details.
 LazyData: true
 LazyDataCompression: bzip2
-Imports: 
-    Seurat (>= 5.0.0),
-    RANN
-Suggests:
-    ggplot2
-LinkingTo: 
-    Rcpp, 
-    RcppArmadillo, 
-    RcppEigen
+Imports: Seurat (>= 5.0.0), RANN
+Suggests: ggplot2
+LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.3.3
 NeedsCompilation: yes
-Depends: 
-    R (>= 3.5.0)
-   
-    
+Depends: R (>= 3.5.0)

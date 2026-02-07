@@ -1,0 +1,52 @@
+================================================================================
+FIRM Package - Third-Party Code Copyrights
+================================================================================
+
+This package includes code from the following sources:
+
+--------------------------------------------------------------------------------
+1. RandomPCA and PLINK data reading utilities
+--------------------------------------------------------------------------------
+Source: https://github.com/gabraham/flashpca
+Copyright (C) 2014-2016 Gad Abraham
+All rights reserved.
+
+Files:
+- src/data.cpp
+- src/data.h
+- src/randompca.cpp
+- src/randompca.h
+- src/util.cpp
+- src/util.h
+- src/svdtall.cpp
+- src/svdtall.h
+- src/svdwide.cpp
+- src/svdwide.h
+
+License: GPL-3 (GNU General Public License version 3)
+
+Modifications made for FIRM:
+- Adapted for use in R package FIRM
+- Integrated with Rcpp for R interface
+- Modified to work with single-cell RNA-seq data integration
+- Replaced std::cout with Rcpp::Rcout for CRAN compliance
+- Removed unused functionality (SCCA, UCCA, projection modes)
+- Reformatted code indentation
+
+
+All modifications are released under GPL-3 license, compatible with the
+original software license.
+
+================================================================================
+NOTICE
+================================================================================
+
+This package (FIRM) is distributed under GPL-3 license. The included
+third-party code from flashpca retains its original copyright and license
+terms. When redistributing this package, you must comply with the terms
+of GPL-3 for both the original and modified portions of the code.
+
+For the full text of the GPL-3 license, see:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+================================================================================
